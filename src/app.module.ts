@@ -3,6 +3,12 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule } from '@nestjs/config';
+import { AuthModule } from './auth/auth.module';
+import { StudentsModule } from './students/students.module';
+import { AttendanceModule } from './attendance/attendance.module';
+import { GradesModule } from './grades/grades.module';
+import { ClassesModule } from './classes/classes.module';
+import { PeriodsModule } from './periods/periods.module';
 
 @Module({
   imports: [
@@ -18,6 +24,12 @@ import { ConfigModule } from '@nestjs/config';
       synchronize: true,
       ssl: true
     }),
+    AuthModule,
+    StudentsModule,
+    AttendanceModule,
+    GradesModule,
+    ClassesModule,
+    PeriodsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
