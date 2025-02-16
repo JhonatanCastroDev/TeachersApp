@@ -1,34 +1,56 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  Get,
+  Param,
+  Put,
+  Delete,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { GradesService } from './grades.service';
 import { CreateGradeDto } from './dto/create-grade.dto';
 import { UpdateGradeDto } from './dto/update-grade.dto';
+import { AuthGuard } from '@nestjs/passport';
 
 @Controller('grades')
 export class GradesController {
   constructor(private readonly gradesService: GradesService) {}
 
   @Post()
-  create(@Body() createGradeDto: CreateGradeDto) {
+  @UseGuards(AuthGuard('jwt'))
+  async create(@Body() createGradeDto: CreateGradeDto) {
     return this.gradesService.create(createGradeDto);
   }
 
   @Get()
-  findAll() {
-    return this.gradesService.findAll();
+  @UseGuards(AuthGuard('jwt'))
+  async findAll(
+    @Query('studentId') studentId?: number,
+    @Query('periodId') periodId?: number,
+  ) {
+    return this.gradesService.findAll(studentId, periodId);
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.gradesService.findOne(+id);
+  @UseGuards(AuthGuard('jwt'))
+  async findOne(@Param('id') id: number) {
+    return this.gradesService.findOne(id);
   }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateGradeDto: UpdateGradeDto) {
-    return this.gradesService.update(+id, updateGradeDto);
+  @Put(':id')
+  @UseGuards(AuthGuard('jwt'))
+  async update(
+    @Param('id') id: number,
+    @Body() updateGradeDto: UpdateGradeDto,
+  ) {
+    return this.gradesService.update(id, updateGradeDto);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.gradesService.remove(+id);
+  @UseGuards(AuthGuard('jwt'))
+  async remove(@Param('id') id: number) {
+    return this.gradesService.remove(id);
   }
 }
