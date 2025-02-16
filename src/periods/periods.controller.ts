@@ -1,34 +1,50 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  Get,
+  Param,
+  Put,
+  Delete,
+  UseGuards,
+} from '@nestjs/common';
 import { PeriodsService } from './periods.service';
 import { CreatePeriodDto } from './dto/create-period.dto';
 import { UpdatePeriodDto } from './dto/update-period.dto';
+import { AuthGuard } from '@nestjs/passport';
 
 @Controller('periods')
 export class PeriodsController {
   constructor(private readonly periodsService: PeriodsService) {}
 
   @Post()
-  create(@Body() createPeriodDto: CreatePeriodDto) {
+  @UseGuards(AuthGuard('jwt')) 
+  async create(@Body() createPeriodDto: CreatePeriodDto) {
     return this.periodsService.create(createPeriodDto);
   }
 
   @Get()
-  findAll() {
+  async findAll() {
     return this.periodsService.findAll();
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.periodsService.findOne(+id);
+  async findOne(@Param('id') id: number) {
+    return this.periodsService.findOne(id);
   }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updatePeriodDto: UpdatePeriodDto) {
-    return this.periodsService.update(+id, updatePeriodDto);
+  @Put(':id')
+  @UseGuards(AuthGuard('jwt')) 
+  async update(
+    @Param('id') id: number,
+    @Body() updatePeriodDto: UpdatePeriodDto,
+  ) {
+    return this.periodsService.update(id, updatePeriodDto);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.periodsService.remove(+id);
+  @UseGuards(AuthGuard('jwt'))
+  async remove(@Param('id') id: number) {
+    return this.periodsService.remove(id);
   }
 }
