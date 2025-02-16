@@ -8,6 +8,7 @@ import {
   Delete,
   Query,
   UseGuards,
+  ParseUUIDPipe,
 } from '@nestjs/common';
 import { StudentsService } from './students.service';
 import { CreateStudentDto } from './dto/create-student.dto';
@@ -34,19 +35,33 @@ export class StudentsController {
   @Get()
   @UseGuards(AuthGuard('jwt'))
   async findAll(@Query('classId') classId?: number) {
-    return this.studentsService.findAll(classId);
+    const students = await this.studentsService.findAll(classId);
+
+    // Formatear la respuesta.
+    return students.map((student) => ({
+      id: student.id,
+      name: student.name,
+      class: {
+        id: student.class.id,
+        name: student.class.name,
+      },
+      attendances: student.attendances.map((attendance) => ({
+        date: attendance.date,
+        status: attendance.status,
+      })),
+    }));
   }
 
   @Get(':id')
   @UseGuards(AuthGuard('jwt'))
-  async findOne(@Param('id') id: number) {
+  async findOne(@Param('id', ParseUUIDPipe) id: string) {
     return this.studentsService.findOne(id);
   }
 
   @Put(':id')
   @UseGuards(AuthGuard('jwt'))
   async update(
-    @Param('id') id: number,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() updateStudentDto: UpdateStudentDto,
   ) {
     return this.studentsService.update(id, updateStudentDto);
@@ -54,7 +69,7 @@ export class StudentsController {
 
   @Delete(':id')
   @UseGuards(AuthGuard('jwt'))
-  async remove(@Param('id') id: number) {
+  async remove(@Param('id', ParseUUIDPipe) id: string) {
     return this.studentsService.remove(id);
   }
 }

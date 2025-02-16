@@ -66,14 +66,14 @@ export class StudentsService {
     if (classId) {
       return this.studentRepository.find({
         where: { class: { id: classId } },
-        relations: ['class'],
+        relations: ['class', 'attendances'],
       });
     }
 
-    return this.studentRepository.find({ relations: ['class'] });
+    return this.studentRepository.find({ relations: ['class', 'attendances'] });
   }
 
-  async findOne(id: number): Promise<Student> {
+  async findOne(id: string): Promise<Student> {
     const student = await this.studentRepository.findOne({
       where: { id },
       relations: ['class'],
@@ -84,7 +84,7 @@ export class StudentsService {
     return student;
   }
 
-  async update(id: number, updateStudentDto: UpdateStudentDto): Promise<Student> {
+  async update(id: string, updateStudentDto: UpdateStudentDto): Promise<Student> {
     const student = await this.studentRepository.findOne({ where: { id } });
     if (!student) {
       throw new NotFoundException('Estudiante no encontrado.');
@@ -104,7 +104,7 @@ export class StudentsService {
     return this.studentRepository.save(student);
   }
 
-  async remove(id: number): Promise<{ message: string }> {
+  async remove(id: string): Promise<{ message: string }> {
     const student = await this.studentRepository.findOne({ where: { id } });
     if (!student) {
       throw new NotFoundException('Estudiante no encontrado.');
