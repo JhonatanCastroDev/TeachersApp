@@ -37,7 +37,7 @@ export class StudentsController {
   async findAll(@Query('classId') classId?: number) {
     const students = await this.studentsService.findAll(classId);
 
-    // Formatear la respuesta.
+    // Formatear la respuesta para incluir las calificaciones
     return students.map((student) => ({
       id: student.id,
       name: student.name,
@@ -48,6 +48,15 @@ export class StudentsController {
       attendances: student.attendances.map((attendance) => ({
         date: attendance.date,
         status: attendance.status,
+      })),
+      grades: student.grades.map((grade) => ({
+        id: grade.id,
+        value: grade.value,
+        evaluation: {
+          id: grade.grade.id,
+          name: grade.grade.name,
+          description: grade.grade.description,
+        },
       })),
     }));
   }

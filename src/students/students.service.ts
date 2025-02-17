@@ -63,14 +63,16 @@ export class StudentsService {
   }
 
   async findAll(classId?: number): Promise<Student[]> {
+    const relations = ['class','attendances', 'grades', 'grades.grade'];
+
     if (classId) {
       return this.studentRepository.find({
         where: { class: { id: classId } },
-        relations: ['class', 'attendances'],
+        relations,
       });
     }
 
-    return this.studentRepository.find({ relations: ['class', 'attendances'] });
+    return this.studentRepository.find({ relations });
   }
 
   async findOne(id: string): Promise<Student> {

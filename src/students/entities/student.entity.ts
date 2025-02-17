@@ -12,7 +12,7 @@ export class Student {
   name: string;
 
   @ManyToOne(() => Class, (classEntity) => classEntity.students)
-  class: Class; // Relación muchos a uno con la entidad Class.
+  class: Class;
 
   @OneToMany(() => Attendance, (attendance) => attendance.student)
   attendances: Attendance[];
