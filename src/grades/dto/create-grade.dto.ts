@@ -1,20 +1,22 @@
-import { IsNumber, IsInt, Min, Max, IsOptional, IsString } from 'class-validator';
+import { IsString, IsInt, IsOptional, IsNumber, Min, Max } from 'class-validator';
 
 export class CreateGradeDto {
-  @IsNumber()
-  @Min(10)
-  @Max(100)
-  value: number;
+  @IsString()
+  name: string;
+
+  @IsString()
+  @IsOptional()
+  description?: string;
 
   @IsNumber()
   @Min(0)
   @Max(100)
-  @IsOptional() 
-  percentage?: number; 
-
-  @IsString()
-  studentId: string; 
+  @IsOptional()
+  defaultGrade?: number = 10;
 
   @IsInt()
-  periodId: number; 
+  classId: number;
+
+  @IsInt()
+  periodId: number;
 }

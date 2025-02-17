@@ -1,4 +1,24 @@
-import { PartialType } from '@nestjs/mapped-types';
-import { CreateGradeDto } from './create-grade.dto';
+import { IsInt, IsNumber, IsOptional, Max, Min } from 'class-validator';
 
-export class UpdateGradeDto extends PartialType(CreateGradeDto) {}
+// File: src/grades/dto/update-grade.dto.ts
+export class UpdateGradeDto {
+    @IsNumber()
+    @Min(10)
+    @Max(100)
+    @IsOptional()
+    value?: number;
+  
+    @IsNumber()
+    @Min(0)
+    @Max(100)
+    @IsOptional()
+    percentage?: number;
+  
+    @IsInt()
+    @IsOptional()
+    studentId?: string;
+  
+    @IsInt()
+    @IsOptional()
+    periodId?: number;
+  }

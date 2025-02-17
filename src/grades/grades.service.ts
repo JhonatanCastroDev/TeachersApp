@@ -3,112 +3,83 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Grade } from './entities/grade.entity';
 import { CreateGradeDto } from './dto/create-grade.dto';
-import { UpdateGradeDto } from './dto/update-grade.dto';
-import { Student } from './../students/entities/student.entity';
-import { Period } from './../periods/entities/period.entity';
+import { Class } from '../classes/entities/class.entity';
+import { Period } from '../periods/entities/period.entity';
+import { User } from '../auth/entities/users.entity';
+import { StudentGrade } from './entities/student-grade.entity';
+import { Student } from '../students/entities/student.entity';
+import { UpdateStudentGradeDto } from './dto/update-student-grade.dto';
 
 @Injectable()
 export class GradesService {
   constructor(
     @InjectRepository(Grade)
     private readonly gradeRepository: Repository<Grade>,
-    @InjectRepository(Student)
-    private readonly studentRepository: Repository<Student>,
+    @InjectRepository(Class)
+    private readonly classRepository: Repository<Class>,
     @InjectRepository(Period)
     private readonly periodRepository: Repository<Period>,
+    @InjectRepository(User)
+    private readonly userRepository: Repository<User>,
+    @InjectRepository(Student)
+    private readonly studentRepository: Repository<Student>,
+    @InjectRepository(StudentGrade)
+    private readonly studentGradeRepository: Repository<StudentGrade>,
   ) {}
 
-  async create(createGradeDto: CreateGradeDto): Promise<Grade> {
-    const { value, percentage, studentId, periodId } = createGradeDto;
+  async create(createGradeDto: CreateGradeDto, teacherId: number): Promise<Grade> {
+    const { name, description, defaultGrade, classId, periodId } = createGradeDto;
 
-    // Verificar si el estudiante existe.
-    const student = await this.studentRepository.findOne({
-      where: { id: studentId },
+    const classEntity = await this.classRepository.findOne({ 
+      where: { id: classId },
+      relations: ['students']
     });
-    if (!student) {
-      throw new NotFoundException('Estudiante no encontrado.');
-    }
+    if (!classEntity) throw new NotFoundException('Clase no encontrada');
 
-    // Verificar si el período existe.
-    const period = await this.periodRepository.findOne({
-      where: { id: periodId },
-    });
-    if (!period) {
-      throw new NotFoundException('Período no encontrado.');
-    }
+    const period = await this.periodRepository.findOne({ where: { id: periodId } });
+    if (!period) throw new NotFoundException('Período no encontrado');
 
-    // Crear y guardar la calificación.
+    const teacher = await this.userRepository.findOne({ where: { id: teacherId } });
+    if (!teacher) throw new NotFoundException('Profesor no encontrado');
+
+    // Crear la evaluación principal
     const grade = this.gradeRepository.create({
-      value,
-      percentage,
-      student,
+      name,
+      description,
+      defaultGrade,
+      class: classEntity,
       period,
+      teacher,
     });
+
+    // Crear notas para todos los estudiantes
+    grade.studentGrades = await Promise.all(
+      classEntity.students.map(async (student) => {
+        return this.studentGradeRepository.create({
+          student,
+          value: defaultGrade,
+        });
+      })
+    );
 
     return this.gradeRepository.save(grade);
   }
 
-  async findAll(studentId?: number, periodId?: number): Promise<Grade[]> {
-    // Filtrar por estudiante y/o período si se proporcionan.
-    const where: any = {};
-    if (studentId) where.student = { id: studentId };
-    if (periodId) where.period = { id: periodId };
-
-    return this.gradeRepository.find({
-      where,
-      relations: ['student', 'period'],
+  async updateStudentGrade(
+    gradeId: number,
+    studentId: string,
+    updateDto: UpdateStudentGradeDto,
+  ): Promise<StudentGrade> {
+    const studentGrade = await this.studentGradeRepository.findOne({
+      where: {
+        grade: { id: gradeId },
+        student: { id: studentId },
+      },
     });
-  }
 
-  async findOne(id: number): Promise<Grade> {
-    const grade = await this.gradeRepository.findOne({
-      where: { id },
-      relations: ['student', 'period'],
-    });
-    if (!grade) {
-      throw new NotFoundException('Calificación no encontrada.');
-    }
-    return grade;
-  }
+    if (!studentGrade) throw new NotFoundException('Calificación no encontrada');
 
-  async update(id: number, updateGradeDto: UpdateGradeDto): Promise<Grade> {
-    const grade = await this.gradeRepository.findOne({ where: { id } });
-    if (!grade) {
-      throw new NotFoundException('Calificación no encontrada.');
-    }
-
-    // Actualizar campos proporcionados.
-    if (updateGradeDto.value) grade.value = updateGradeDto.value;
-    if (updateGradeDto.percentage) grade.percentage = updateGradeDto.percentage;
-    if (updateGradeDto.studentId) {
-      const student = await this.studentRepository.findOne({
-        where: { id: updateGradeDto.studentId },
-      });
-      if (!student) {
-        throw new NotFoundException('Estudiante no encontrado.');
-      }
-      grade.student = student;
-    }
-    if (updateGradeDto.periodId) {
-      const period = await this.periodRepository.findOne({
-        where: { id: updateGradeDto.periodId },
-      });
-      if (!period) {
-        throw new NotFoundException('Período no encontrado.');
-      }
-      grade.period = period;
-    }
-
-    return this.gradeRepository.save(grade);
-  }
-
-  async remove(id: number): Promise<{ message: string }> {
-    const grade = await this.gradeRepository.findOne({ where: { id } });
-    if (!grade) {
-      throw new NotFoundException('Calificación no encontrada.');
-    }
-
-    await this.gradeRepository.delete(id);
-    return { message: 'Calificación eliminada correctamente.' };
+    studentGrade.value = updateDto.value;
+    return this.studentGradeRepository.save(studentGrade);
   }
 }
