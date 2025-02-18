@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Student } from './entities/student.entity';
@@ -19,9 +19,7 @@ export class StudentsService {
   async create(createStudentDto: CreateStudentDto): Promise<Student> {
     const { name, classId } = createStudentDto;
 
-    const classEntity = await this.classRepository.findOne({
-      where: { id: classId },
-    });
+    const classEntity = await this.findClass(classId)
     if (!classEntity) {
       throw new NotFoundException('Clase no encontrada.');
     }
@@ -43,9 +41,7 @@ export class StudentsService {
     for (const studentDto of students) {
       const { name, classId } = studentDto;
 
-      const classEntity = await this.classRepository.findOne({
-        where: { id: classId },
-      });
+      const classEntity = await this.findClass(classId)
       if (!classEntity) {
         throw new NotFoundException(`Clase no encontrada para el estudiante: ${name}.`);
       }
@@ -64,13 +60,9 @@ export class StudentsService {
 
   async findAll(classId?: number): Promise<Student[]> {
     const relations = ['class','attendances', 'grades', 'grades.grade'];
+    const validClass = await this.findClass(classId)
 
-    if (classId) {
-      return this.studentRepository.find({
-        where: { class: { id: classId } },
-        relations,
-      });
-    }
+    if (!validClass ) throw new NotFoundException(`${classId} is not a valid classId`)
 
     return this.studentRepository.find({ relations });
   }
@@ -114,5 +106,15 @@ export class StudentsService {
 
     await this.studentRepository.delete(id);
     return { message: 'Estudiante eliminado correctamente.' };
+  }
+
+  async findClass (classID : number){
+    const validClass = await this.classRepository.findOne({
+      where: {id:classID}
+    })
+
+    if(!validClass) throw new NotFoundException('class not found')
+
+    return validClass
   }
 }

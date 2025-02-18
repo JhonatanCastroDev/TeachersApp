@@ -11,6 +11,6 @@ import { Student } from 'src/students/entities/student.entity';
   ],
   controllers: [ClassesController],
   providers: [ClassesService],
-  exports: [TypeOrmModule]
+  exports: [TypeOrmModule, ClassesService]
 })
 export class ClassesModule {}
