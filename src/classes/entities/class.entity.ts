@@ -1,6 +1,7 @@
 import { Entity, PrimaryGeneratedColumn, Column, OneToMany, CreateDateColumn, UpdateDateColumn } from 'typeorm';
 import { Student } from '../../students/entities/student.entity';
 import { Grade } from 'src/grades/entities/grade.entity';
+import { Attendance } from 'src/attendance/entities/attendance.entity';
 
 @Entity()
 export class Class {
@@ -15,6 +16,9 @@ export class Class {
 
   @OneToMany(() => Grade, (grade) => grade.class) // Nueva relación con Grade
   grades: Grade[];
+
+  @OneToMany(() => Attendance, (attendance) => attendance.class) // Relación con Attendance
+  attendances: Attendance[];
 
   @CreateDateColumn()
   created_at: Date;

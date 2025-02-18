@@ -1,4 +1,4 @@
-import { IsDateString, IsString, IsInt, IsUUID, IsEnum } from 'class-validator';
+import { IsDateString, IsString, IsUUID, IsEnum, IsInt } from 'class-validator';
 
 export enum AttendanceStatus {
   PRESENT = 'present',
@@ -10,10 +10,13 @@ export class CreateAttendanceDto {
   @IsDateString()
   date: string; // Fecha en formato ISO (ejemplo: "2023-10-01").
 
-  @IsEnum(AttendanceStatus)
-  status: AttendanceStatus; // Estado de la asistencia: "present", "absent", "excused".
+  @IsInt()
+  classId: number; // ID de la clase.
 
   @IsString()
   @IsUUID()
   studentId: string; // ID del estudiante.
+
+  @IsEnum(AttendanceStatus)
+  status: AttendanceStatus; // Estado de la asistencia: "present", "absent", "excused".
 }

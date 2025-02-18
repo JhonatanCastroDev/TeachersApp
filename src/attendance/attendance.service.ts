@@ -1,10 +1,11 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Attendance } from './entities/attendance.entity';
-import { CreateAttendanceDto } from './dto/create-attendance.dto';
+import { AttendanceStatus, CreateAttendanceDto } from './dto/create-attendance.dto';
 import { UpdateAttendanceDto } from './dto/update-attendance.dto';
-import { Student } from './../students/entities/student.entity';
+import { Student } from '../students/entities/student.entity';
+import { Class } from '../classes/entities/class.entity';
 
 @Injectable()
 export class AttendanceService {
@@ -13,63 +14,58 @@ export class AttendanceService {
     private readonly attendanceRepository: Repository<Attendance>,
     @InjectRepository(Student)
     private readonly studentRepository: Repository<Student>,
+    @InjectRepository(Class)
+    private readonly classRepository: Repository<Class>,
   ) {}
 
-  async create(createAttendanceDto: CreateAttendanceDto): Promise<Attendance> {
-    const { date, status, studentId } = createAttendanceDto;
+  async createAttendanceForClass(createAttendanceDto: CreateAttendanceDto): Promise<Attendance[]> {
+    const { date, classId } = createAttendanceDto;
 
-    // Verificar si el estudiante existe.
-    const student = await this.studentRepository.findOne({
-      where: { id: studentId },
+    const classEntity = await this.classRepository.findOne({
+      where: { id: classId },
+      relations: ['students'], // Cargar la lista de estudiantes de la clase.
     });
-    if (!student) {
-      throw new NotFoundException('Estudiante no encontrado.');
+    if (!classEntity) {
+      throw new NotFoundException('Clase no encontrada.');
     }
 
-    // Crear y guardar el registro de asistencia.
-    const attendance = this.attendanceRepository.create({
-      date: new Date(date),
-      status,
-      student,
-    });
+    // Crear asistencias para todos los estudiantes de la clase.
+    const attendances = await Promise.all(
+      classEntity.students.map(async (student) => {
+        const attendance = this.attendanceRepository.create({
+          date: new Date(date),
+          class: classEntity,
+          student,
+          status: AttendanceStatus.PRESENT, // Valor predeterminado.
+        });
+        return this.attendanceRepository.save(attendance);
+      }),
+    );
 
+    return attendances;
+  }
+
+  async updateAttendanceStatus(
+    attendanceId: number,
+    status: AttendanceStatus,
+  ): Promise<Attendance> {
+    if (!Object.values(AttendanceStatus).includes(status)) {
+      throw new BadRequestException('Estado de asistencia no válido.');
+    }
+
+    const attendance = await this.attendanceRepository.findOne({ where: { id: attendanceId } });
+    if (!attendance) {
+      throw new NotFoundException('Asistencia no encontrada.');
+    }
+
+    attendance.status = status;
     return this.attendanceRepository.save(attendance);
   }
 
-  async findByStudent(studentId: string): Promise<Attendance[]> {
+  async findByClassAndDate(classId: number, date: string): Promise<Attendance[]> {
     return this.attendanceRepository.find({
-      where: { student: { id: studentId } },
+      where: { class: { id: classId }, date: new Date(date) },
       relations: ['student'],
     });
-  }
-
-  async findByClass(classId: number, date: string): Promise<Attendance[]> {
-    return this.attendanceRepository.find({
-      where: { student: { class: { id: classId } }, date: new Date(date) },
-      relations: ['student'],
-    });
-  }
-
-  async update(id: number, updateAttendanceDto: UpdateAttendanceDto): Promise<Attendance> {
-    const attendance = await this.attendanceRepository.findOne({ where: { id } });
-    if (!attendance) {
-      throw new NotFoundException('Registro de asistencia no encontrado.');
-    }
-
-    // Actualizar campos proporcionados.
-    if (updateAttendanceDto.date) attendance.date = new Date(updateAttendanceDto.date);
-    if (updateAttendanceDto.status) attendance.status = updateAttendanceDto.status;
-
-    return this.attendanceRepository.save(attendance);
-  }
-
-  async remove(id: number): Promise<{ message: string }> {
-    const attendance = await this.attendanceRepository.findOne({ where: { id } });
-    if (!attendance) {
-      throw new NotFoundException('Registro de asistencia no encontrado.');
-    }
-
-    await this.attendanceRepository.delete(id);
-    return { message: 'Registro de asistencia eliminado correctamente.' };
   }
 }
