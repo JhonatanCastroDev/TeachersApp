@@ -13,6 +13,7 @@ import {
 import { AttendanceService } from './attendance.service';
 import { AttendanceStatus, CreateAttendanceDto } from './dto/create-attendance.dto';
 import { AuthGuard } from '@nestjs/passport';
+import { UpdateAttendanceDto } from './dto/update-attendance.dto';
 
 @Controller('attendance')
 export class AttendanceController {
@@ -28,23 +29,22 @@ export class AttendanceController {
   @UseGuards(AuthGuard('jwt'))
   async updateAttendanceStatus(
     @Param('id', ParseIntPipe) id: number,
-    @Body('status') status: string, 
+    @Body() UpdateAttendanceDto: UpdateAttendanceDto, 
   ) {
-    if (!Object.values(AttendanceStatus).includes(status as AttendanceStatus)) {
-      throw new BadRequestException('Estado de asistencia no válido.');
+    if (!Object.values(AttendanceStatus).includes(UpdateAttendanceDto.status as AttendanceStatus)) {
+      throw new BadRequestException('Attendance state not valid');
     }
 
-    const attendanceStatus = status as AttendanceStatus;
+    const attendanceStatus = UpdateAttendanceDto.status as AttendanceStatus;
 
     return this.attendanceService.updateAttendanceStatus(id, attendanceStatus);
   }
 
   @Get('class/:classId')
-  @UseGuards(AuthGuard('jwt'))
-  async findByClassAndDate(
-    @Param('classId', ParseIntPipe) classId: number,
-    @Query('date') date: string,
+  @UseGuards(AuthGuard('jwt')) 
+  async getStudentsWithAttendances(
+    @Param('classId', ParseIntPipe) classId:number
   ) {
-    return this.attendanceService.findByClassAndDate(classId, date);
+    return this.attendanceService.getStudentsWithAttendances(classId);
   }
 }

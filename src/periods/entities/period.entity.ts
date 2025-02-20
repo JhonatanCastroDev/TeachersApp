@@ -18,9 +18,9 @@ export class Period {
   @OneToMany(() => Grade, (grade) => grade.period)
   grades: Grade[]; 
 
-  @CreateDateColumn()
+  @CreateDateColumn({select: false})
   created_at: Date;
 
-  @UpdateDateColumn()
+  @UpdateDateColumn({select: false})
   updated_at: Date;
 }

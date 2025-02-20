@@ -18,31 +18,35 @@ export class AttendanceService {
     private readonly classRepository: Repository<Class>,
   ) {}
 
-  async createAttendanceForClass(createAttendanceDto: CreateAttendanceDto): Promise<Attendance[]> {
+  async createAttendanceForClass(createAttendanceDto: CreateAttendanceDto) {
     const { date, classId } = createAttendanceDto;
 
     const classEntity = await this.classRepository.findOne({
       where: { id: classId },
-      relations: ['students'], // Cargar la lista de estudiantes de la clase.
+      relations: ['students'],
     });
     if (!classEntity) {
-      throw new NotFoundException('Clase no encontrada.');
+      throw new NotFoundException('Class not found');
     }
 
-    // Crear asistencias para todos los estudiantes de la clase.
     const attendances = await Promise.all(
       classEntity.students.map(async (student) => {
         const attendance = this.attendanceRepository.create({
           date: new Date(date),
-          class: classEntity,
           student,
-          status: AttendanceStatus.PRESENT, // Valor predeterminado.
+          status: AttendanceStatus.PRESENT,
+          class: classEntity
         });
         return this.attendanceRepository.save(attendance);
       }),
     );
 
-    return attendances;
+    return attendances.map((attendance) => {
+      delete attendance.class;
+      delete attendance.created_at;
+      delete attendance.updated_at;
+      return attendance;
+    })
   }
 
   async updateAttendanceStatus(
@@ -50,22 +54,31 @@ export class AttendanceService {
     status: AttendanceStatus,
   ): Promise<Attendance> {
     if (!Object.values(AttendanceStatus).includes(status)) {
-      throw new BadRequestException('Estado de asistencia no válido.');
+      throw new BadRequestException('Attendance status not found');
     }
 
     const attendance = await this.attendanceRepository.findOne({ where: { id: attendanceId } });
     if (!attendance) {
-      throw new NotFoundException('Asistencia no encontrada.');
+      throw new NotFoundException('Attendance not found');
     }
 
     attendance.status = status;
     return this.attendanceRepository.save(attendance);
   }
 
-  async findByClassAndDate(classId: number, date: string): Promise<Attendance[]> {
-    return this.attendanceRepository.find({
-      where: { class: { id: classId }, date: new Date(date) },
-      relations: ['student'],
+  async getStudentsWithAttendances(classId: number): Promise<any[]> {
+    const classEntity = await this.classRepository.findOne({
+      where: { id: classId },
     });
+    if (!classEntity) {
+      throw new NotFoundException('Class not found');
+    }
+
+    const students = await this.studentRepository.find({
+      where: { class: { id: classId } },
+      relations: ['attendances'],
+    });
+
+    return students
   }
 }

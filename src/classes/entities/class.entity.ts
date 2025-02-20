@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column, OneToMany, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, OneToMany, CreateDateColumn, UpdateDateColumn, DeleteDateColumn } from 'typeorm';
 import { Student } from '../../students/entities/student.entity';
 import { Grade } from 'src/grades/entities/grade.entity';
 import { Attendance } from 'src/attendance/entities/attendance.entity';
@@ -20,9 +20,12 @@ export class Class {
   @OneToMany(() => Attendance, (attendance) => attendance.class) // Relación con Attendance
   attendances: Attendance[];
 
-  @CreateDateColumn()
+  @CreateDateColumn({select: false})
   created_at: Date;
 
-  @UpdateDateColumn()
+  @UpdateDateColumn({select: false})
   updated_at: Date;
+
+  @DeleteDateColumn({select: false})
+  deleted_at: Date;
 }

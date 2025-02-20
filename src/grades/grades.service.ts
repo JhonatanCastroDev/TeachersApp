@@ -27,8 +27,8 @@ export class GradesService {
     private readonly studentGradeRepository: Repository<StudentGrade>,
   ) {}
 
-  async create(createGradeDto: CreateGradeDto, teacherId: number): Promise<Grade> {
-    const { name, description, defaultGrade, classId, periodId } = createGradeDto;
+  async create(createGradeDto: CreateGradeDto, teacherId: number): Promise<any> {
+    const { name, description, classId, periodId } = createGradeDto;
 
     const classEntity = await this.classRepository.findOne({ 
       where: { id: classId },
@@ -46,7 +46,6 @@ export class GradesService {
     const grade = this.gradeRepository.create({
       name,
       description,
-      defaultGrade,
       class: classEntity,
       period,
       teacher,
@@ -57,29 +56,48 @@ export class GradesService {
       classEntity.students.map(async (student) => {
         return this.studentGradeRepository.create({
           student,
-          value: defaultGrade,
+          value: null,
         });
       })
     );
+    const savedGrade = await this.gradeRepository.save(grade);
 
-    return this.gradeRepository.save(grade);
+    return {
+      id: savedGrade.id,
+      grades: savedGrade.studentGrades,
+      teacher: savedGrade.teacher,
+      name: savedGrade.name,
+      description: savedGrade.description,
+    };
   }
 
   async updateStudentGrade(
     gradeId: number,
-    studentId: string,
     updateDto: UpdateStudentGradeDto,
   ): Promise<StudentGrade> {
     const studentGrade = await this.studentGradeRepository.findOne({
-      where: {
-        grade: { id: gradeId },
-        student: { id: studentId },
-      },
+      where: { id: gradeId},
     });
 
-    if (!studentGrade) throw new NotFoundException('Calificación no encontrada');
+    if (!studentGrade) throw new NotFoundException('Grade not found');
 
     studentGrade.value = updateDto.value;
     return this.studentGradeRepository.save(studentGrade);
+  }
+
+  async getStudentsWithGrades(classId: number): Promise<any[]> {
+    const classEntity = await this.classRepository.findOne({
+      where: { id: classId },
+    });
+    if (!classEntity) {
+      throw new NotFoundException('Class not found');
+    }
+
+    const students = await this.studentRepository.find({
+      where: { class: { id: classId } },
+      relations: ['grades'],
+    });
+
+    return students
   }
 }

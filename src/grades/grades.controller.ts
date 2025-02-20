@@ -1,4 +1,4 @@
-import { Controller, Post, Body, UseGuards, Request, Put, Param } from '@nestjs/common';
+import { Controller, Post, Body, UseGuards, Request, Put, Param, Get, ParseIntPipe } from '@nestjs/common';
 import { GradesService } from './grades.service';
 import { CreateGradeDto } from './dto/create-grade.dto';
 import { AuthGuard } from '@nestjs/passport';
@@ -14,13 +14,20 @@ export class GradesController {
     return this.gradesService.create(createGradeDto, req.user.id);
   }
 
-  @Put(':gradeId/students/:studentId')
+  @Put(':gradeId/value')
   @UseGuards(AuthGuard('jwt'))
   async updateStudentGrade(
     @Param('gradeId') gradeId: number,
-    @Param('studentId') studentId: string,
     @Body() updateDto: UpdateStudentGradeDto,
   ) {
-    return this.gradesService.updateStudentGrade(gradeId, studentId, updateDto);
+    return this.gradesService.updateStudentGrade(gradeId, updateDto);
   }
+
+    @Get('class/:classId')
+    @UseGuards(AuthGuard('jwt')) 
+    async getStudentsWithAttendances(
+      @Param('classId', ParseIntPipe) classId:number
+    ) {
+      return this.gradesService.getStudentsWithGrades(classId);
+    }
 }

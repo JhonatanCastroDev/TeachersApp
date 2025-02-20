@@ -55,7 +55,7 @@ export class ClassesService {
       throw new NotFoundException('Clase no encontrada.');
     }
 
-    await this.classRepository.delete(id);
+    await this.classRepository.softDelete(id);
     return { message: 'Clase eliminada correctamente.' };
   }
 }

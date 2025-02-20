@@ -8,8 +8,8 @@ export class StudentGrade {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ type: 'float' })
-  value: number; // Nota individual del estudiante
+  @Column({ type: 'float', nullable: true })
+  value: number;
 
   @ManyToOne(() => Grade, (grade) => grade.studentGrades)
   grade: Grade;
@@ -17,9 +17,9 @@ export class StudentGrade {
   @ManyToOne(() => Student, (student) => student.grades)
   student: Student;
 
-  @CreateDateColumn()
+  @CreateDateColumn({select: false})
   created_at: Date;
 
-  @UpdateDateColumn()
+  @UpdateDateColumn({select: false})
   updated_at: Date;
 }

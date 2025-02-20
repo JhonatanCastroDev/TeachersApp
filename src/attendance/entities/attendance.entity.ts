@@ -22,11 +22,11 @@ export class Attendance {
   student: Student;
 
   @ManyToOne(() => Class, (classEntity) => classEntity.attendances)
-  class: Class; // Clase asociada.
+  class: Class;
 
-  @CreateDateColumn()
+  @CreateDateColumn({select: false})
   created_at: Date;
 
-  @UpdateDateColumn()
+  @UpdateDateColumn({select: false})
   updated_at: Date;
 }

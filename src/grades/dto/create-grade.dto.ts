@@ -8,12 +8,6 @@ export class CreateGradeDto {
   @IsOptional()
   description?: string;
 
-  @IsNumber()
-  @Min(0)
-  @Max(100)
-  @IsOptional()
-  defaultGrade?: number = 10;
-
   @IsInt()
   classId: number;
 

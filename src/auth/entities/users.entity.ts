@@ -1,6 +1,6 @@
 import { Exclude } from 'class-transformer';
 import { Grade } from 'src/grades/entities/grade.entity';
-import { Entity, PrimaryGeneratedColumn, Column, BeforeInsert, BeforeUpdate, OneToMany } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, BeforeInsert, BeforeUpdate, OneToMany, UpdateDateColumn, CreateDateColumn } from 'typeorm';
 
 @Entity()
 export class User {
@@ -18,10 +18,10 @@ export class User {
   })
   password: string;
 
-  @Column({ default: () => 'CURRENT_TIMESTAMP' })
+  @CreateDateColumn({select: false})
   created_at: Date;
 
-  @Column({ default: () => 'CURRENT_TIMESTAMP', onUpdate: 'CURRENT_TIMESTAMP' })
+  @UpdateDateColumn({select: false})
   updated_at: Date;
 
   @OneToMany(() => Grade, (grade) => grade.teacher)
