@@ -6,6 +6,8 @@ import { AttendanceStatus, CreateAttendanceDto } from './dto/create-attendance.d
 import { UpdateAttendanceDto } from './dto/update-attendance.dto';
 import { Student } from '../students/entities/student.entity';
 import { Class } from '../classes/entities/class.entity';
+import * as ExcelJS from 'exceljs';
+import { FillPatterns, BorderStyle } from 'exceljs';
 
 @Injectable()
 export class AttendanceService {
@@ -21,10 +23,7 @@ export class AttendanceService {
   async createAttendanceForClass(createAttendanceDto: CreateAttendanceDto) {
     const { date, classId } = createAttendanceDto;
 
-    const classEntity = await this.classRepository.findOne({
-      where: { id: classId },
-      relations: ['students'],
-    });
+    const classEntity = await this.checkIfClassExists(classId)
     if (!classEntity) {
       throw new NotFoundException('Class not found');
     }
@@ -67,9 +66,7 @@ export class AttendanceService {
   }
 
   async getStudentsWithAttendances(classId: number): Promise<any[]> {
-    const classEntity = await this.classRepository.findOne({
-      where: { id: classId },
-    });
+    const classEntity = await this.checkIfClassExists(classId)
     if (!classEntity) {
       throw new NotFoundException('Class not found');
     }
@@ -80,5 +77,119 @@ export class AttendanceService {
     });
 
     return students
+  }
+
+  async generateAttendanceReport(classId: number): Promise<{ buffer: Buffer; filename: string }> {
+    
+    const classEntity = await this.checkIfClassExists(classId)
+    
+    const attendances = await this.attendanceRepository.find({
+      where: { class: { id: classId } },
+      relations: ['student'],
+      order: { date: 'ASC' }
+    });
+  
+    const studentsMap = new Map<string, {
+      name: string;
+      absences: number;
+      attendances: { [date: string]: string };
+    }>();
+  
+    const datesSet = new Set<string>();
+    
+  
+    attendances.forEach(attendance => {
+      const dateStr = attendance.date.toISOString().split('T')[0];
+      datesSet.add(dateStr);
+      
+      const studentId = attendance.student.id;
+      if (!studentsMap.has(studentId)) {
+        studentsMap.set(studentId, {
+          name: attendance.student.name,
+          absences: 0,
+          attendances: {}
+        });
+      }
+      
+      const student = studentsMap.get(studentId);
+      student.attendances[dateStr] = attendance.status;
+      
+      if (attendance.status === AttendanceStatus.ABSENT) {
+        student.absences++;
+      }
+    });
+  
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('Asistencias');
+  
+    const headerStyle: Partial<ExcelJS.Style> = {
+      font: { bold: true },
+      fill: {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FFD3D3D3' }
+      },
+      border: {
+        top: { style: 'thin' },
+        left: { style: 'thin' },
+        bottom: { style: 'thin' },
+        right: { style: 'thin' }
+      }
+    };
+  
+    worksheet.columns = [
+      { header: 'Estudiante', key: 'name', width: 30 },
+      { header: 'Inasistencias', key: 'absences', width: 15 },
+      ...Array.from(datesSet).sort((a, b) => new Date(b).getTime() - new Date(a).getTime()).map(date => ({
+        header: new Date(date).toLocaleDateString('es-ES'),
+        key: date,
+        width: 15
+      }))
+    ];
+  
+    worksheet.getRow(1).eachCell(cell => {
+      cell.style = headerStyle;
+    });
+  
+    studentsMap.forEach(student => {
+      const row: any = {
+        name: student.name,
+        absences: student.absences
+      };
+  
+      Array.from(datesSet).sort().forEach(date => {
+        row[date] = this.translateStatus(student.attendances[date] || 'No registrado');
+      });
+  
+      worksheet.addRow(row);
+    });
+  
+    const buffer = await workbook.xlsx.writeBuffer();
+    
+    return {
+      buffer: buffer as Buffer,
+      filename: `asistencias-clase-${classId}-${new Date().toISOString().split('T')[0]}.xlsx`
+    };
+  }
+  
+  private translateStatus(status: string): string {
+    const statusMap = {
+      [AttendanceStatus.PRESENT]: '✓',
+      [AttendanceStatus.ABSENT]: '✗',
+      [AttendanceStatus.EXCUSED]: 'J',
+      'No registrado': '-'
+    };
+    return statusMap[status] || status;
+  }
+
+  private async checkIfClassExists(classId: number) {
+    const classEntity = await this.classRepository.findOne({
+      where: { id: classId },
+      relations: ['students'],
+    });
+    if (!classEntity) {
+      throw new NotFoundException('Class not found');
+    }
+    return classEntity;
   }
 }

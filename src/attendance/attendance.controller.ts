@@ -9,15 +9,19 @@ import {
   ParseIntPipe,
   Query,
   BadRequestException,
+  Res,
 } from '@nestjs/common';
 import { AttendanceService } from './attendance.service';
 import { AttendanceStatus, CreateAttendanceDto } from './dto/create-attendance.dto';
 import { AuthGuard } from '@nestjs/passport';
 import { UpdateAttendanceDto } from './dto/update-attendance.dto';
+import { Response } from 'express';
 
 @Controller('attendance')
 export class AttendanceController {
-  constructor(private readonly attendanceService: AttendanceService) {}
+  constructor(
+    private readonly attendanceService: AttendanceService
+  ) {}
 
   @Post('class')
   @UseGuards(AuthGuard('jwt'))
@@ -47,4 +51,18 @@ export class AttendanceController {
   ) {
     return this.attendanceService.getStudentsWithAttendances(classId);
   }
+
+  @Get('export/class/:classId')
+@UseGuards(AuthGuard('jwt'))
+async exportAttendanceReport(
+  @Param('classId', ParseIntPipe) classId: number,
+  @Res() res: Response
+) {
+  const { buffer, filename } = await this.attendanceService.generateAttendanceReport(classId);
+  
+  res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+  res.setHeader('Content-Disposition', `attachment; filename=${filename}`);
+  
+  return res.send(buffer);
+}
 }
