@@ -8,7 +8,7 @@ export class Attendance {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column()
+  @Column({type: 'timestamptz'})
   date: Date; // Fecha en la que se toma la asistencia.
 
   @Column({

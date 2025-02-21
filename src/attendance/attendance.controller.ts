@@ -16,6 +16,7 @@ import { AttendanceStatus, CreateAttendanceDto } from './dto/create-attendance.d
 import { AuthGuard } from '@nestjs/passport';
 import { UpdateAttendanceDto } from './dto/update-attendance.dto';
 import { Response } from 'express';
+import { ParseDatePipe } from 'src/common/pipes/parse-date-pipe/parse-date.pipe';
 
 @Controller('attendance')
 export class AttendanceController {
@@ -53,16 +54,22 @@ export class AttendanceController {
   }
 
   @Get('export/class/:classId')
-@UseGuards(AuthGuard('jwt'))
-async exportAttendanceReport(
-  @Param('classId', ParseIntPipe) classId: number,
-  @Res() res: Response
-) {
-  const { buffer, filename } = await this.attendanceService.generateAttendanceReport(classId);
-  
-  res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-  res.setHeader('Content-Disposition', `attachment; filename=${filename}`);
-  
-  return res.send(buffer);
-}
+  @UseGuards(AuthGuard('jwt'))
+  async exportAttendanceReport(
+    @Param('classId', ParseIntPipe) classId: number,
+    @Query('startDate', ParseDatePipe) startDate: string,
+    @Query('endDate', ParseDatePipe) endDate: string,
+    @Res() res: Response
+  ) {
+    const { buffer, filename } = await this.attendanceService.generateAttendanceReport(
+      classId,
+      startDate,
+      endDate
+    );
+    
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    
+    return res.end(buffer);
+  }
 }

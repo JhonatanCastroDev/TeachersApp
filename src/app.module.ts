@@ -7,6 +7,7 @@ import { AttendanceModule } from './attendance/attendance.module';
 import { GradesModule } from './grades/grades.module';
 import { ClassesModule } from './classes/classes.module';
 import { PeriodsModule } from './periods/periods.module';
+import { CommonModule } from './common/common.module';
 
 @Module({
   imports: [
@@ -20,7 +21,7 @@ import { PeriodsModule } from './periods/periods.module';
       password: process.env.DB_PASSWORD,
       autoLoadEntities: true,
       synchronize: true,
-      ssl: true
+      ssl: true,
     }),
     AuthModule,
     StudentsModule,
@@ -28,6 +29,7 @@ import { PeriodsModule } from './periods/periods.module';
     GradesModule,
     ClassesModule,
     PeriodsModule,
+    CommonModule,
   ],
   controllers: [],
   providers: [],

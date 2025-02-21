@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Between, Repository } from 'typeorm';
 import { Attendance } from './entities/attendance.entity';
 import { AttendanceStatus, CreateAttendanceDto } from './dto/create-attendance.dto';
 import { UpdateAttendanceDto } from './dto/update-attendance.dto';
@@ -79,12 +79,43 @@ export class AttendanceService {
     return students
   }
 
-  async generateAttendanceReport(classId: number): Promise<{ buffer: Buffer; filename: string }> {
+  async generateAttendanceReport(
+    classId: number,
+    startDate?: string,
+    endDate?: string
+  ): Promise<{ buffer: Buffer; filename: string }> {
+    const parsedStartDate = startDate ? new Date(startDate) : undefined;
+    const parsedEndDate = endDate ? new Date(endDate) : undefined;
+
+    if (startDate && endDate && startDate > endDate) {
+      throw new BadRequestException('La fecha de inicio no puede ser posterior a la fecha de fin');
+    }
+  
+    if (startDate && parsedStartDate > new Date()) {
+      throw new BadRequestException('La fecha de inicio no puede ser futura');
+    }
+  
+    if (endDate && parsedEndDate > new Date()) {
+      throw new BadRequestException('La fecha de fin no puede ser futura');
+    }
+
+    if (parsedStartDate && parsedEndDate && parsedStartDate > parsedEndDate) {
+    throw new BadRequestException('The start date must be before the end date');
+    }
+
+    const whereClause: any = { class: { id: classId } };
+  
+    if (parsedStartDate || parsedEndDate) {
+    whereClause.date = Between(
+      parsedStartDate || new Date(0), 
+      parsedEndDate || new Date()      
+    );
+  }
     
     const classEntity = await this.checkIfClassExists(classId)
     
     const attendances = await this.attendanceRepository.find({
-      where: { class: { id: classId } },
+      where: whereClause ,
       relations: ['student'],
       order: { date: 'ASC' }
     });
@@ -138,10 +169,10 @@ export class AttendanceService {
     };
   
     worksheet.columns = [
-      { header: 'Estudiante', key: 'name', width: 30 },
-      { header: 'Inasistencias', key: 'absences', width: 15 },
+      { header: 'NAMES', key: 'name', width: 30 },
+      { header: 'ABSENCES', key: 'absences', width: 15 },
       ...Array.from(datesSet).sort((a, b) => new Date(b).getTime() - new Date(a).getTime()).map(date => ({
-        header: new Date(date).toLocaleDateString('es-ES'),
+        header: date,
         key: date,
         width: 15
       }))
@@ -165,10 +196,13 @@ export class AttendanceService {
     });
   
     const buffer = await workbook.xlsx.writeBuffer();
+    const filename = `asistencias-clase-${classId}${
+      startDate ? `_desde-${startDate}` : ''
+    }${endDate ? `_hasta-${endDate}` : ''}.xlsx`;
     
     return {
       buffer: buffer as Buffer,
-      filename: `asistencias-clase-${classId}-${new Date().toISOString().split('T')[0]}.xlsx`
+      filename: filename
     };
   }
   
