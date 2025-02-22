@@ -7,7 +7,6 @@ import { UpdateAttendanceDto } from './dto/update-attendance.dto';
 import { Student } from '../students/entities/student.entity';
 import { Class } from '../classes/entities/class.entity';
 import * as ExcelJS from 'exceljs';
-import { FillPatterns, BorderStyle } from 'exceljs';
 
 @Injectable()
 export class AttendanceService {
