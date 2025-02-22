@@ -34,41 +34,43 @@ export class GradesService {
       where: { id: classId },
       relations: ['students']
     });
-    if (!classEntity) throw new NotFoundException('Clase no encontrada');
+    if (!classEntity) throw new NotFoundException('Class not found');
 
     const period = await this.periodRepository.findOne({ where: { id: periodId } });
-    if (!period) throw new NotFoundException('Período no encontrado');
+    if (!period) throw new NotFoundException('Period not found');
 
     const teacher = await this.userRepository.findOne({ where: { id: teacherId } });
-    if (!teacher) throw new NotFoundException('Profesor no encontrado');
+    if (!teacher) throw new NotFoundException('Teacher not found');
 
-    // Crear la evaluación principal
-    const grade = this.gradeRepository.create({
-      name,
-      description,
-      class: classEntity,
-      period,
-      teacher,
-    });
-
-    // Crear notas para todos los estudiantes
-    grade.studentGrades = await Promise.all(
-      classEntity.students.map(async (student) => {
-        return this.studentGradeRepository.create({
-          student,
-          value: null,
+    const grade = await this.gradeRepository.manager.transaction(
+      async (transactionalEntityManager) => {
+        const newGrade = this.gradeRepository.create({
+          name,
+          description,
+          class: classEntity,
+          period,
+          teacher
         });
-      })
-    );
-    const savedGrade = await this.gradeRepository.save(grade);
+        await transactionalEntityManager.save(newGrade);
 
-    return {
-      id: savedGrade.id,
-      grades: savedGrade.studentGrades,
-      teacher: savedGrade.teacher,
-      name: savedGrade.name,
-      description: savedGrade.description,
-    };
+        const studentGrades = classEntity.students.map(student => {
+          return this.studentGradeRepository.create({
+            student,
+            value: null,
+            grade: newGrade
+          });
+        });
+
+        await transactionalEntityManager.save(StudentGrade, studentGrades);
+
+        return transactionalEntityManager.findOne(Grade, {
+          where: { id: newGrade.id },
+          relations: ['studentGrades']
+        });
+        }
+        );
+  
+    return grade;
   }
 
   async updateStudentGrade(

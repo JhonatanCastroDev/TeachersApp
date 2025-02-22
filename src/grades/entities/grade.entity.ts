@@ -11,13 +11,10 @@ export class Grade {
   id: number;
 
   @Column()
-  name: string; // Nombre de la evaluación
+  name: string; 
 
   @Column({ nullable: true })
-  description?: string; // Descripción opcional
-
-  @Column({ default: 10 }) // Valor predeterminado para todas las notas
-  defaultGrade: number;
+  description?: string; 
 
   @ManyToOne(() => Class, (classEntity) => classEntity.grades)
   class: Class;
@@ -30,6 +27,7 @@ export class Grade {
 
   @OneToMany(() => StudentGrade, (studentGrade) => studentGrade.grade, {
     cascade: true,
+    onDelete: 'CASCADE'
   })
   studentGrades: StudentGrade[];
 
