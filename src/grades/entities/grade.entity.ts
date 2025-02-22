@@ -4,6 +4,7 @@ import { Class } from '../../classes/entities/class.entity';
 import { Period } from '../../periods/entities/period.entity';
 import { StudentGrade } from './student-grade.entity';
 import { User } from '../../auth/entities/users.entity';
+import { learningSkill } from '../dto/create-grade.dto';
 
 @Entity()
 export class Grade {
@@ -12,6 +13,12 @@ export class Grade {
 
   @Column()
   name: string; 
+
+  @Column({
+    type: 'enum',
+    enum: learningSkill,
+  })
+  skill: learningSkill;
 
   @Column({ nullable: true })
   description?: string; 

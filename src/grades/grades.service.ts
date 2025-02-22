@@ -28,7 +28,7 @@ export class GradesService {
   ) {}
 
   async create(createGradeDto: CreateGradeDto, teacherId: number): Promise<any> {
-    const { name, description, classId, periodId } = createGradeDto;
+    const { name, description, classId, periodId, skill } = createGradeDto;
 
     const classEntity = await this.classRepository.findOne({ 
       where: { id: classId },
@@ -49,7 +49,8 @@ export class GradesService {
           description,
           class: classEntity,
           period,
-          teacher
+          teacher,
+          skill
         });
         await transactionalEntityManager.save(newGrade);
 
@@ -95,11 +96,11 @@ export class GradesService {
       throw new NotFoundException('Class not found');
     }
 
-    const students = await this.studentRepository.find({
+    const grades = await this.gradeRepository.find({
       where: { class: { id: classId } },
-      relations: ['grades'],
+      relations: ['studentGrades', 'studentGrades.student'],
     });
 
-    return students
+    return grades
   }
 }

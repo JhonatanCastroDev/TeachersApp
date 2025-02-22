@@ -1,4 +1,11 @@
-import { IsString, IsInt, IsOptional, IsNumber, Min, Max } from 'class-validator';
+import { IsString, IsInt, IsOptional, IsNumber, Min, Max, IsEnum } from 'class-validator';
+
+export enum learningSkill {
+  READING = 'reading',
+  WRITING = 'writing',
+  LISTENING = 'listening',
+  SPEAKING = 'speaking',
+}
 
 export class CreateGradeDto {
   @IsString()
@@ -7,6 +14,9 @@ export class CreateGradeDto {
   @IsString()
   @IsOptional()
   description?: string;
+
+  @IsEnum(learningSkill)
+  skill: learningSkill;
 
   @IsInt()
   classId: number;
