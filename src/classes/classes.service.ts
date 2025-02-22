@@ -29,10 +29,10 @@ export class ClassesService {
   async findOne(id: number): Promise<Class> {
     const classEntity = await this.classRepository.findOne({
       where: { id },
-      relations: ['students'], // Incluir la lista de estudiantes.
+      relations: ['students']
     });
     if (!classEntity) {
-      throw new NotFoundException('Clase no encontrada.');
+      throw new NotFoundException('class not found');
     }
     return classEntity;
   }
@@ -40,10 +40,9 @@ export class ClassesService {
   async update(id: number, updateClassDto: UpdateClassDto): Promise<Class> {
     const classEntity = await this.classRepository.findOne({ where: { id } });
     if (!classEntity) {
-      throw new NotFoundException('Clase no encontrada.');
+      throw new NotFoundException('class not found');
     }
 
-    // Actualizar campos proporcionados.
     if (updateClassDto.name) classEntity.name = updateClassDto.name;
 
     return this.classRepository.save(classEntity);
@@ -52,10 +51,10 @@ export class ClassesService {
   async remove(id: number): Promise<{ message: string }> {
     const classEntity = await this.classRepository.findOne({ where: { id } });
     if (!classEntity) {
-      throw new NotFoundException('Clase no encontrada.');
+      throw new NotFoundException('class not found');
     }
 
     await this.classRepository.softDelete(id);
-    return { message: 'Clase eliminada correctamente.' };
+    return { message: 'Class deleted correctly' };
   }
 }

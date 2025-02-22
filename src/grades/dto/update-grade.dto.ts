@@ -1,6 +1,6 @@
 import { IsInt, IsNumber, IsOptional, Max, Min } from 'class-validator';
 
-// File: src/grades/dto/update-grade.dto.ts
+
 export class UpdateGradeDto {
     @IsNumber()
     @Min(10)

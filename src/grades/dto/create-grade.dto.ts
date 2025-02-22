@@ -1,4 +1,4 @@
-import { IsString, IsInt, IsOptional, IsNumber, Min, Max, IsEnum } from 'class-validator';
+import { IsString, IsInt, IsOptional, IsEnum } from 'class-validator';
 
 export enum learningSkill {
   READING = 'reading',

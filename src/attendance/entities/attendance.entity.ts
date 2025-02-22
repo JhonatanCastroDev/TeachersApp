@@ -9,7 +9,7 @@ export class Attendance {
   id: number;
 
   @Column({type: 'timestamptz'})
-  date: Date; // Fecha en la que se toma la asistencia.
+  date: Date;
 
   @Column({
     type: 'enum',

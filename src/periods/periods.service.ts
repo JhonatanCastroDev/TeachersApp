@@ -15,7 +15,6 @@ export class PeriodsService {
   async create(createPeriodDto: CreatePeriodDto): Promise<Period> {
     const { name, startDate, endDate } = createPeriodDto;
 
-    // Crear y guardar el período.
     const period = this.periodRepository.create({
       name,
       startDate: new Date(startDate),
@@ -35,7 +34,7 @@ export class PeriodsService {
       relations: ['grades'],
     });
     if (!period) {
-      throw new NotFoundException('Período no encontrado.');
+      throw new NotFoundException('Period not found');
     }
     return period;
   }
@@ -43,10 +42,9 @@ export class PeriodsService {
   async update(id: number, updatePeriodDto: UpdatePeriodDto): Promise<Period> {
     const period = await this.periodRepository.findOne({ where: { id } });
     if (!period) {
-      throw new NotFoundException('Período no encontrado.');
+      throw new NotFoundException('Period not found');
     }
 
-    // Actualizar campos proporcionados.
     if (updatePeriodDto.name) period.name = updatePeriodDto.name;
     if (updatePeriodDto.startDate) period.startDate = new Date(updatePeriodDto.startDate);
     if (updatePeriodDto.endDate) period.endDate = new Date(updatePeriodDto.endDate);
@@ -57,10 +55,10 @@ export class PeriodsService {
   async remove(id: number): Promise<{ message: string }> {
     const period = await this.periodRepository.findOne({ where: { id } });
     if (!period) {
-      throw new NotFoundException('Período no encontrado.');
+      throw new NotFoundException('Period not found');
     }
 
     await this.periodRepository.delete(id);
-    return { message: 'Período eliminado correctamente.' };
+    return { message: 'Period deleted correctly.' };
   }
 }

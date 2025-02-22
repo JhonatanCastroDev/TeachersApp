@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Student } from './entities/student.entity';
@@ -21,10 +21,9 @@ export class StudentsService {
 
     const classEntity = await this.findClass(classId)
     if (!classEntity) {
-      throw new NotFoundException('Clase no encontrada.');
+      throw new NotFoundException('Class not found');
     }
 
-    // Crear y guardar el estudiante.
     const student = this.studentRepository.create({
       name,
       class: classEntity,
@@ -43,7 +42,7 @@ export class StudentsService {
 
       const classEntity = await this.findClass(classId)
       if (!classEntity) {
-        throw new NotFoundException(`Clase no encontrada para el estudiante: ${name}.`);
+        throw new NotFoundException(`Class not found for student: ${name}.`);
       }
 
       const student = this.studentRepository.create({
@@ -73,7 +72,7 @@ export class StudentsService {
       relations: ['class'],
     });
     if (!student) {
-      throw new NotFoundException('Estudiante no encontrado.');
+      throw new NotFoundException('Student not found');
     }
     return student;
   }
@@ -81,7 +80,7 @@ export class StudentsService {
   async update(id: string, updateStudentDto: UpdateStudentDto): Promise<Student> {
     const student = await this.studentRepository.findOne({ where: { id } });
     if (!student) {
-      throw new NotFoundException('Estudiante no encontrado.');
+      throw new NotFoundException('Student not found');
     }
 
     if (updateStudentDto.name) student.name = updateStudentDto.name;
@@ -90,7 +89,7 @@ export class StudentsService {
         where: { id: updateStudentDto.classId },
       });
       if (!classEntity) {
-        throw new NotFoundException('Clase no encontrada.');
+        throw new NotFoundException('Class not found');
       }
       student.class = classEntity;
     }
@@ -101,11 +100,11 @@ export class StudentsService {
   async remove(id: string): Promise<{ message: string }> {
     const student = await this.studentRepository.findOne({ where: { id } });
     if (!student) {
-      throw new NotFoundException('Estudiante no encontrado.');
+      throw new NotFoundException('Student not found');
     }
 
     await this.studentRepository.delete(id);
-    return { message: 'Estudiante eliminado correctamente.' };
+    return { message: 'Student deleted correctly' };
   }
 
   async findClass (classID : number){

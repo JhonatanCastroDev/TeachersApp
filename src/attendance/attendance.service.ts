@@ -3,7 +3,6 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Between, Repository } from 'typeorm';
 import { Attendance } from './entities/attendance.entity';
 import { AttendanceStatus, CreateAttendanceDto } from './dto/create-attendance.dto';
-import { UpdateAttendanceDto } from './dto/update-attendance.dto';
 import { Student } from '../students/entities/student.entity';
 import { Class } from '../classes/entities/class.entity';
 import * as ExcelJS from 'exceljs';
@@ -87,15 +86,15 @@ export class AttendanceService {
     const parsedEndDate = endDate ? new Date(endDate) : undefined;
 
     if (startDate && endDate && startDate > endDate) {
-      throw new BadRequestException('La fecha de inicio no puede ser posterior a la fecha de fin');
+      throw new BadRequestException('start date cannot be greater than endDate');
     }
   
     if (startDate && parsedStartDate > new Date()) {
-      throw new BadRequestException('La fecha de inicio no puede ser futura');
+      throw new BadRequestException('start date cannot be in the future');
     }
   
     if (endDate && parsedEndDate > new Date()) {
-      throw new BadRequestException('La fecha de fin no puede ser futura');
+      throw new BadRequestException('end date cannot be in the future');
     }
 
     if (parsedStartDate && parsedEndDate && parsedStartDate > parsedEndDate) {
@@ -150,7 +149,7 @@ export class AttendanceService {
     });
   
     const workbook = new ExcelJS.Workbook();
-    const worksheet = workbook.addWorksheet('Asistencias');
+    const worksheet = workbook.addWorksheet('Attendances');
   
     const headerStyle: Partial<ExcelJS.Style> = {
       font: { bold: true },
@@ -188,16 +187,16 @@ export class AttendanceService {
       };
   
       Array.from(datesSet).sort().forEach(date => {
-        row[date] = this.translateStatus(student.attendances[date] || 'No registrado');
+        row[date] = this.translateStatus(student.attendances[date] || 'Not registered');
       });
   
       worksheet.addRow(row);
     });
   
     const buffer = await workbook.xlsx.writeBuffer();
-    const filename = `asistencias-clase-${classId}${
-      startDate ? `_desde-${startDate}` : ''
-    }${endDate ? `_hasta-${endDate}` : ''}.xlsx`;
+    const filename = `class-attendance-${classId}${
+      startDate ? `_from-${startDate}` : ''
+    }${endDate ? `_until-${endDate}` : ''}.xlsx`;
     
     return {
       buffer: buffer as Buffer,
@@ -210,7 +209,7 @@ export class AttendanceService {
       [AttendanceStatus.PRESENT]: '✓',
       [AttendanceStatus.ABSENT]: '✗',
       [AttendanceStatus.EXCUSED]: 'J',
-      'No registrado': '-'
+      'Not registered': '-'
     };
     return statusMap[status] || status;
   }

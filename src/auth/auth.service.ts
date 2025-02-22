@@ -6,7 +6,6 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { LoginDto } from './dto/login.dto';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
-import { plainToInstance } from 'class-transformer';
 import { UserResponseDto } from './dto/user-response.dto';
 
 @Injectable()
@@ -20,21 +19,17 @@ export class AuthService {
   async register(createUserDto: CreateUserDto): Promise<UserResponseDto> {
     const { name, email, password } = createUserDto;
 
-    // Normalizar el correo.
     const normalizedEmail = email.toLowerCase().trim();
 
-    // Verificar si el email ya está registrado.
     const existingUser = await this.userRepository.findOne({
       where: { email: normalizedEmail },
     });
     if (existingUser) {
-      throw new ConflictException('El email ya está registrado.');
+      throw new ConflictException('Email already in use.');
     }
 
-    // Hashear la contraseña.
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Crear y guardar el usuario.
     const user = this.userRepository.create({
       name,
       email: normalizedEmail,
@@ -50,25 +45,21 @@ export class AuthService {
   async login(loginDto: LoginDto): Promise<{ token: string }> {
     const { email, password } = loginDto;
 
-    // Normalizar el correo.
     const normalizedEmail = email.toLowerCase().trim();
 
-    // Buscar el usuario por email normalizado.
     const user = await this.userRepository.findOne({
       where: { email: normalizedEmail },
       select: {id:true, email: true, password: true}
     });
     if (!user) {
-      throw new UnauthorizedException('Credenciales inválidas.');
+      throw new UnauthorizedException('Invalid credentials.');
     }
 
-    // Comparar contraseñas.
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
-      throw new UnauthorizedException('Credenciales inválidas.');
+      throw new UnauthorizedException('Invalid credentials.');
     }
 
-    // Generar token JWT.
     const payload = { id: user.id, email: user.email };
     const token = this.jwtService.sign(payload);
 
@@ -78,10 +69,8 @@ export class AuthService {
   async getProfile(userId: number): Promise<UserResponseDto> {
     const user = await this.userRepository.findOne({ where: { id: userId } });
     if (!user) {
-      throw new UnauthorizedException('Usuario no encontrado.');
+      throw new UnauthorizedException('User not found');
     }
-
-    delete user.password
     
     return user
   }

@@ -1,4 +1,3 @@
-// File: src/grades/entities/grade.entity.ts
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany, CreateDateColumn, UpdateDateColumn } from 'typeorm';
 import { Class } from '../../classes/entities/class.entity';
 import { Period } from '../../periods/entities/period.entity';

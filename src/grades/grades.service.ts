@@ -148,7 +148,7 @@ export class GradesService {
     });
 
     const workbook = new ExcelJS.Workbook();
-    const worksheet = workbook.addWorksheet('Calificaciones');
+    const worksheet = workbook.addWorksheet('Grades');
 
     const skillHeaderStyle: Partial<ExcelJS.Style> = {
       font: { bold: true, color: { argb: 'FFFFFFFF' }, size: 12 },
@@ -165,7 +165,7 @@ export class GradesService {
     };
 
     const columns = [
-      { header: 'NOMBRES', key: 'name', width: 35 }
+      { header: 'NAMES', key: 'name', width: 35 }
     ];
     
 
@@ -180,14 +180,13 @@ export class GradesService {
       });
     });
 
-    columns.push({ header: 'PROMEDIO', key: 'average', width: 15 });
+    columns.push({ header: 'AVERAGE', key: 'average', width: 15 });
 
     worksheet.columns = columns;
 
-    worksheet.mergeCells('A1:A2'); // Fusionar celda de NOMBRES
+    worksheet.mergeCells('A1:A2');
     worksheet.mergeCells(`${String.fromCharCode(65 + worksheet.columnCount - 1)}1:${String.fromCharCode(65 + worksheet.columnCount - 1)}2`); // Fusionar celda de PROMEDIO
 
-    // Aplicar estilos a las celdas fusionadas
     const nameHeaderCell = worksheet.getCell('A1');
     nameHeaderCell.style = skillHeaderStyle;
     nameHeaderCell.alignment = { 
@@ -204,9 +203,8 @@ export class GradesService {
       wrapText: true
     };
 
-    // Modificar el estilo de la segunda fila para quitar el fondo azul
     worksheet.getRow(2).eachCell((cell, colNumber) => {
-      if (colNumber !== 1 && colNumber !== worksheet.columnCount) { // Excluir Nombres y Promedio
+      if (colNumber !== 1 && colNumber !== worksheet.columnCount) {
         cell.style = evaluationHeaderStyle;
       }
     });
@@ -214,13 +212,13 @@ export class GradesService {
     let colIndex = 1;
     Array.from(skillsMap.entries()).forEach(([skill, grades], skillIndex) => {
       if (grades.length > 0) {
-        // Fusionar celdas para el nombre de la skill
+        // Fusion cells for skill name
         worksheet.mergeCells(1, colIndex + 1, 1, colIndex + grades.length);
         const skillCell = worksheet.getCell(1, colIndex + 1);
         skillCell.value = skill.toUpperCase();
         skillCell.style = skillHeaderStyle;
     
-        // Agregar nombres de evaluaciones con estilo diferente
+        // Add names for each grade
         grades.forEach((grade, gradeIndex) => {
           const evaluationCell = worksheet.getCell(2, colIndex + gradeIndex + 1);
           evaluationCell.value = grade.name;

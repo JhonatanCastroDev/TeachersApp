@@ -1,4 +1,3 @@
-// src/common/pipes/parse-date.pipe.ts
 import { PipeTransform, Injectable, BadRequestException } from '@nestjs/common';
 
 @Injectable()

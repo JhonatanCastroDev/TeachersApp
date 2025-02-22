@@ -37,7 +37,6 @@ export class StudentsController {
   async findAll(@Query('classId') classId?: number) {
     const students = await this.studentsService.findAll(classId);
 
-    // Formatear la respuesta para incluir las calificaciones
     return students.map((student) => ({
       id: student.id,
       name: student.name,

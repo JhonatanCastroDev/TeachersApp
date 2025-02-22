@@ -1,4 +1,3 @@
-// File: src/grades/entities/student-grade.entity.ts
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, CreateDateColumn, UpdateDateColumn, JoinColumn } from 'typeorm';
 import { Grade } from './grade.entity';
 import { Student } from '../../students/entities/student.entity';
@@ -12,9 +11,9 @@ export class StudentGrade {
   value: number | null;
 
   @ManyToOne(() => Grade, (grade) => grade.studentGrades, {
-    onDelete: 'CASCADE' // Eliminar en cascada si se borra el Grade
+    onDelete: 'CASCADE'
   })
-  @JoinColumn({ name: 'grade_id' }) // Nombre de columna explícito
+  @JoinColumn({ name: 'grade_id' })
   grade: Grade;
 
   @ManyToOne(() => Student, (student) => student.grades)

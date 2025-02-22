@@ -14,10 +14,10 @@ export class Class {
   @OneToMany(() => Student, (student) => student.class)
   students: Student[];
 
-  @OneToMany(() => Grade, (grade) => grade.class) // Nueva relación con Grade
+  @OneToMany(() => Grade, (grade) => grade.class)
   grades: Grade[];
 
-  @OneToMany(() => Attendance, (attendance) => attendance.class) // Relación con Attendance
+  @OneToMany(() => Attendance, (attendance) => attendance.class)
   attendances: Attendance[];
 
   @CreateDateColumn({select: false})
